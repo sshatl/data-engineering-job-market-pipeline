@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw_jobs
+    schema: public
+    tables:
+      - name: workua_jobs_clean
+      - name: dou_jobs_clean
+      - name: ithub_jobs_clean

@@ -1,0 +1,34 @@
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# dbt
+dbt/logs/
+dbt/target/
+dbt/.user.yml
+
+# airflow
+airflow/logs/
+
+# macOS
+.DS_Store
+
+# env
+.env
+.env.*
+!.env.example
+
+# data
+data/
+
+# spark temp
+spark-warehouse/
+
+# IDE
+.vscode/
+.idea/
+
+# misc
+*.log

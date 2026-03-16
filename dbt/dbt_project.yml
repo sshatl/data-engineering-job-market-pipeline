@@ -1,0 +1,16 @@
+name: job_market_dbt
+version: "1.0.0"
+config-version: 2
+
+profile: job_market_dbt
+
+model-paths: ["models"]
+
+models:
+  job_market_dbt:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: table
+    marts:
+      +materialized: table
