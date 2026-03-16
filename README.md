@@ -1,4 +1,10 @@
 # Ukrainian Data Engineer Job Market Pipeline
+![Python](https://img.shields.io/badge/python-3.10-blue)
+![Docker](https://img.shields.io/badge/docker-compose-blue)
+![Airflow](https://img.shields.io/badge/apache-airflow-red)
+![Spark](https://img.shields.io/badge/apache-spark-orange)
+![dbt](https://img.shields.io/badge/dbt-core-orange)
+![Postgres](https://img.shields.io/badge/postgres-warehouse-blue)
 
 End-to-end **Data Engineering pipeline** that collects, processes and analyzes Data Engineer job postings from Ukrainian job platforms.
 
