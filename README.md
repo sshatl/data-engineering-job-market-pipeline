@@ -1,4 +1,5 @@
 # Ukrainian Data Engineer Job Market Pipeline
+[![CI](https://github.com/sshatl/data-engineering-job-market-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/sshatl/data-engineering-job-market-pipeline/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Airflow](https://img.shields.io/badge/apache-airflow-red)
