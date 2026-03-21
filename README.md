@@ -1,6 +1,6 @@
 # Ukrainian Data Engineer Job Market Pipeline
 [![CI](https://github.com/sshatl/data-engineering-job-market-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/sshatl/data-engineering-job-market-pipeline/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/python-3.10-blue)
+![Python](https://img.shields.io/badge/python-3.12-blue)
 ![Docker](https://img.shields.io/badge/docker-compose-blue)
 ![Airflow](https://img.shields.io/badge/apache-airflow-red)
 ![Spark](https://img.shields.io/badge/apache-spark-orange)
@@ -62,36 +62,32 @@ The pipeline includes:
 | Warehouse | Postgres |
 | Transformations | dbt |
 | Dashboard | Metabase |
-| Monitoring | Telegram Alerts |
+| Alerting | Telegram |
 | Infrastructure | Docker |
 
 ---
 
 # Project Structure
 ```text
-job-market-data-platform
-│
+data-engineering-job-market-pipeline
 ├── airflow
 │   ├── dags
-│   ├── lib
+│   │   ├── lib
+│   │   └── pipeline_jobs_daily.py
 │   └── Dockerfile
-│
 ├── spark
 │   ├── jobs
 │   └── Dockerfile
-│
 ├── dbt
 │   ├── models
 │   ├── dbt_project.yml
 │   └── profiles.yml
-│
-├── data
-│   ├── bronze
-│   ├── silver
-│   └── source
-│
+├── docs
+├── tests
 ├── docker-compose.yml
-└── README.md 
+├── pyproject.toml
+├── requirements.txt
+└── README.md
 ```
 ---
 
@@ -102,11 +98,10 @@ job-market-data-platform
 Airflow DAG executes daily and fetches job postings from multiple sources.
 
 Tasks include:
-```
-fetch jobs
-fetch detail pages
-parse job descriptions
-```
+-fetch jobs
+-fetch detail pages
+-parse job descriptions
+
 Each source pipeline runs independently and produces raw datasets.
 
 ---
@@ -116,23 +111,23 @@ Each source pipeline runs independently and produces raw datasets.
 Raw scraped data is stored in **MinIO**.
 
 Purpose:
-```
+
 • store raw snapshots  
 • enable reprocessing  
 • debugging and lineage
-```
+
 ---
 
 ## 3️⃣ Silver Layer
 
 Spark performs distributed transformations:
-```
+
 • text normalization  
 • seniority classification  
 • remote type detection  
 • skill extraction  
-```
-Cleaned datasets are loaded into **Postgres staging tables**.
+
+Cleaned datasets are stored in **MinIO** (Silver layer) and loaded into **Postgres** staging tables.
 
 ---
 
@@ -141,11 +136,11 @@ Cleaned datasets are loaded into **Postgres staging tables**.
 Postgres acts as the analytical warehouse.
 
 Source tables:
-```
-workua_jobs_clean
-dou_jobs_clean
-ithub_jobs_clean
-```
+
+- workua_jobs_clean
+- dou_jobs_clean
+- ithub_jobs_clean
+
 These tables contain normalized job postings ready for analytical modeling.
 
 ---
@@ -155,31 +150,31 @@ These tables contain normalized job postings ready for analytical modeling.
 dbt builds analytical models on top of warehouse tables.
 
 Model layers include:
-```
+
 staging
 intermediate
 marts
-```
+
 These models power the analytics dashboard.
 
 ---
 
 # Data Quality
 
-The pipeline includes automated validation.
+The pipeline includes automated validation. Validation is performed both at the data model level (dbt) and at the pipeline level (SQL checks in Airflow).
 
 ## dbt tests
-```
+
 not_null
 unique
 accepted_values
-```
+
 Applied to important columns:
-```
+
 source
 seniority
 remote_type
-```
+
 ---
 
 ## Operational Checks
@@ -196,7 +191,7 @@ unknown_seniority_ratio < 0.8
 ```
 ---
 
-# Monitoring
+# Alerting
 
 Airflow task failures trigger **Telegram alerts**.
 
@@ -227,6 +222,19 @@ The dashboard shows:
 
 ---
 
+# CI
+
+GitHub Actions validates the project on every push.
+
+Checks include:
+- Ruff linting
+- pytest unit tests
+- dbt parse validation
+
+CI ensures code quality and prevents broken data transformations from being merged.
+
+---
+
 # How to Run
 
 Requirements:
@@ -252,7 +260,6 @@ Enable the DAG `pipeline_jobs_daily` inside the Airflow UI.
 
 Potential extensions:
 
-• salary analysis  
 • historical job tracking  
 • incremental dbt models  
 • additional job sources  
