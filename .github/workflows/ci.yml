@@ -35,4 +35,11 @@ jobs:
         run: pip install dbt-postgres
 
       - name: Run dbt parse
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: airflow
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_SCHEMA: public
         run: dbt parse --project-dir dbt --profiles-dir dbt
