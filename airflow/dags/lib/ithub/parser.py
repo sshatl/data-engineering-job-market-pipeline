@@ -4,7 +4,6 @@ from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
 
-
 ITHUB_BASE_URL = "https://ithub.ua"
 
 ITHUB_QUERY_NAME = "data_engineer"

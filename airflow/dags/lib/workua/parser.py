@@ -5,7 +5,6 @@ from urllib.parse import quote_plus, urljoin
 
 from bs4 import BeautifulSoup
 
-
 WORKUA_BASE_URL = "https://www.work.ua"
 
 WORKUA_QUERIES = [
@@ -195,10 +194,10 @@ def parse_workua_detail_html(html: str, job_id: str, job_url: str, ds: str) -> d
     published_text = ""
 
     meta_patterns = [
-        r"(Повна зайнятість|Неповна зайнятість|Стажування|Часткова зайнятість)",
-        r"(Досвід роботи від [^.]+)",
-        r"(Вища освіта|Незакінчена вища освіта|Середня спеціальна освіта)",
-        r"(Дистанційна робота|Віддалена робота|Гібридний формат роботи)",
+    r"(Повна зайнятість|Неповна зайнятість|Стажування|Часткова зайнятість)",
+    r"(Досвід роботи від\s+\d+\s+рок(?:ів|и|у))",
+    r"(Вища освіта|Незакінчена вища освіта|Середня спеціальна освіта)",
+    r"(Дистанційна робота|Віддалена робота|Гібридний формат роботи)",
     ]
 
     matches = []
@@ -227,7 +226,11 @@ def parse_workua_detail_html(html: str, job_id: str, job_url: str, ds: str) -> d
         if loc_match:
             location = clean_text(loc_match.group(1))
 
-    date_match = re.search(r"(Вакансія від\s+[^\n]+)", page_text, flags=re.IGNORECASE)
+    date_match = re.search(
+    r"(Вакансія від\s+\d{1,2}\s+[A-Za-zА-Яа-яІіЇїЄєҐґ]+\s+\d{4})",
+    page_text,
+    flags=re.IGNORECASE,
+    )
     if date_match:
         published_text = clean_text(date_match.group(1))
 

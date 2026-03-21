@@ -32,3 +32,5 @@ spark-warehouse/
 
 # misc
 *.log
+
+.venv/

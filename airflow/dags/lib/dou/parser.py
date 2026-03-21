@@ -5,7 +5,6 @@ from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
-
 DOU_BASE_URL = "https://jobs.dou.ua"
 
 

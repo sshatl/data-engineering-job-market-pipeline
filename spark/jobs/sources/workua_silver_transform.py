@@ -3,7 +3,9 @@ from __future__ import annotations
 import os
 import re
 
-from pyspark.sql import SparkSession, functions as F, types as T
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql import types as T
 
 from jobs.common.job_enrichment import (
     detect_remote_type,

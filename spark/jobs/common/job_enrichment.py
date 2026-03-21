@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-
 SKILL_PATTERNS = [
     ("sql", [r"\bsql\b", r"postgresql", r"mysql", r"t-sql", r"pl/sql", r"\bms sql\b", r"\bmssql\b"]),
     ("python", [r"\bpython\b"]),
