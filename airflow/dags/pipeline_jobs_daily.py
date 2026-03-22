@@ -199,6 +199,49 @@ def build_spark_env_vars(pg_table: str) -> dict[str, str]:
         "PG_TABLE": pg_table,
     }
 
+def build_pipeline_metrics_cmd() -> str:
+    sql = f"""
+INSERT INTO {POSTGRES_SCHEMA}.pipeline_run_metrics
+(run_date, dag_id, source_name, layer_name, metric_name, metric_value)
+
+-- source tables row count
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'dou', 'silver', 'row_count', count(*) FROM {POSTGRES_SCHEMA}.dou_jobs_clean
+UNION ALL
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'workua', 'silver', 'row_count', count(*) FROM {POSTGRES_SCHEMA}.workua_jobs_clean
+UNION ALL
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'ithub', 'silver', 'row_count', count(*) FROM {POSTGRES_SCHEMA}.ithub_jobs_clean
+
+-- unified dataset
+UNION ALL
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'all_sources', 'gold', 'row_count', count(*) FROM {POSTGRES_SCHEMA}.int_job_posts_all_sources
+
+-- quality metrics
+UNION ALL
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'all_sources', 'quality', 'unknown_remote_ratio',
+    count(*) FILTER (WHERE remote_type = 'unknown')::numeric / count(*)
+FROM {POSTGRES_SCHEMA}.int_job_posts_all_sources
+
+UNION ALL
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'all_sources', 'quality', 'unknown_seniority_ratio',
+    count(*) FILTER (WHERE seniority = 'unknown')::numeric / count(*)
+FROM {POSTGRES_SCHEMA}.int_job_posts_all_sources
+
+UNION ALL
+SELECT CURRENT_DATE, 'pipeline_jobs_daily', 'all_sources', 'quality', 'empty_skills_ratio',
+    count(*) FILTER (WHERE skills IS NULL OR btrim(skills) = '')::numeric / count(*)
+FROM {POSTGRES_SCHEMA}.int_job_posts_all_sources;
+""".strip()
+
+    cmd = f"""
+docker exec -i \
+  -e PGPASSWORD="{POSTGRES_PASSWORD}" \
+  jm_postgres \
+  psql -h {POSTGRES_HOST} -p {POSTGRES_PORT} -U {POSTGRES_USER} -d {POSTGRES_DB} -v ON_ERROR_STOP=1 <<'SQL'
+{sql}
+SQL
+""".strip()
+
+    return cmd
 
 with DAG(
     dag_id="pipeline_jobs_daily",
@@ -315,16 +358,16 @@ with DAG(
     dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command="""
-docker exec -i jm_dbt dbt run --project-dir /usr/app --profiles-dir /usr/app
-""",
+        docker exec -i jm_dbt dbt run --project-dir /usr/app --profiles-dir /usr/app
+        """,
         execution_timeout=timedelta(minutes=20),
     )
 
     dbt_test = BashOperator(
         task_id="dbt_test",
         bash_command="""
-docker exec -i jm_dbt dbt test --project-dir /usr/app --profiles-dir /usr/app
-""",
+        docker exec -i jm_dbt dbt test --project-dir /usr/app --profiles-dir /usr/app
+        """,
         execution_timeout=timedelta(minutes=20),
     )
 
@@ -358,6 +401,12 @@ docker exec -i jm_dbt dbt test --project-dir /usr/app --profiles-dir /usr/app
         execution_timeout=timedelta(minutes=5),
     )
 
+    write_pipeline_metrics = BashOperator(
+        task_id="write_pipeline_metrics",
+        bash_command=build_pipeline_metrics_cmd(),
+        execution_timeout=timedelta(minutes=5),
+    )
+
     operational_checks_done = EmptyOperator(task_id="operational_checks_done")
     finish = EmptyOperator(task_id="finish")
 
@@ -386,4 +435,4 @@ docker exec -i jm_dbt dbt test --project-dir /usr/app --profiles-dir /usr/app
         check_ithub_non_empty,
         check_int_non_empty,
         check_data_quality,
-    ] >> operational_checks_done >> finish
+    ] >> operational_checks_done >> write_pipeline_metrics >> finish

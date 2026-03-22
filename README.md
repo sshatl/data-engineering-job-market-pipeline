@@ -161,7 +161,16 @@ These models power the analytics dashboard.
 
 # Data Quality
 
-The pipeline includes automated validation. Validation is performed both at the data model level (dbt) and at the pipeline level (SQL checks in Airflow).
+The pipeline stores run-level operational metrics in PostgreSQL after each successful DAG run.
+
+Tracked metrics include:
+- row counts by source
+- unified dataset row count
+- unknown seniority ratio
+- unknown remote type ratio
+- empty skills ratio
+
+This helps detect silent pipeline degradation even when tasks complete successfully.
 
 ## dbt tests
 
