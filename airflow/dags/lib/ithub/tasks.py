@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from datetime import datetime, timezone
@@ -8,6 +9,8 @@ from datetime import datetime, timezone
 import boto3
 import requests
 from lib.ithub.parser import build_ithub_search_url, parse_ithub_search_page
+
+logger = logging.getLogger(__name__)
 
 
 def env(name: str, default: str | None = None) -> str:
@@ -93,7 +96,7 @@ def fetch_ithub_jobs(**context) -> None:
         )
 
         if not cards:
-            print(f"Stop: no cards found on page={page}")
+            logger.info("Stop: no cards found on page=%d", page)
             break
 
         new_cards: list[dict] = []
@@ -105,11 +108,11 @@ def fetch_ithub_jobs(**context) -> None:
             new_cards.append(card)
 
         if not new_cards:
-            print(f"Stop: no new cards found on page={page}")
+            logger.info("Stop: no new cards found on page=%d", page)
             break
 
         all_cards.extend(new_cards)
-        print(f"Page={page}, new={len(new_cards)}, total={len(all_cards)}")
+        logger.info("Page=%d, new=%d, total=%d", page, len(new_cards), len(all_cards))
 
         page += 1
         time.sleep(2)
@@ -120,4 +123,4 @@ def fetch_ithub_jobs(**context) -> None:
     parsed_key = f"jobs/source=ithub/dt={ds}/parsed/search_results.json"
     upload_json(bucket=bucket, key=parsed_key, payload=all_cards)
 
-    print(f"Uploaded {len(all_cards)} jobs to s3://{bucket}/{parsed_key}")
+    logger.info("Uploaded %d jobs to s3://%s/%s", len(all_cards), bucket, parsed_key)

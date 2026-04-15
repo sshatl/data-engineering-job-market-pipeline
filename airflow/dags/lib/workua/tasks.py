@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from datetime import datetime, timezone
@@ -15,6 +16,8 @@ from lib.workua.parser import (
     parse_workua_detail_html,
     parse_workua_search_cards,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def env(name: str, default: str | None = None) -> str:
@@ -110,7 +113,7 @@ def fetch_workua_jobs(**context) -> None:
             new_cards = [card for card in cards if card["job_url"] not in global_seen_urls]
 
             if not new_cards:
-                print(f"Stop: no new cards found for query={query_name}, page={page}")
+                logger.info("Stop: no new cards found for query=%s, page=%d", query_name, page)
                 break
 
             for card in new_cards:
@@ -119,7 +122,7 @@ def fetch_workua_jobs(**context) -> None:
             parsed_key = f"jobs/source=workua/query={query_name}/dt={ds}/parsed/search_results_page_{page}.json"
             upload_json(bucket=bucket, key=parsed_key, payload=new_cards)
 
-            print(f"Uploaded {len(new_cards)} cards to s3://{bucket}/{parsed_key}")
+            logger.info("Uploaded %d cards to s3://%s/%s", len(new_cards), bucket, parsed_key)
 
             page += 1
             time.sleep(2)
@@ -175,7 +178,7 @@ def fetch_workua_detail_pages(**context) -> None:
         detail_key = f"jobs/source=workua/details_raw/dt={ds}/job_{job_id}.html"
         upload_html(bucket=bucket, key=detail_key, html_text=response.text)
 
-        print(f"Uploaded detail page {idx}/{len(deduped_cards)} to s3://{bucket}/{detail_key}")
+        logger.info("Uploaded detail page %d/%d to s3://%s/%s", idx, len(deduped_cards), bucket, detail_key)
         time.sleep(2)
 
 
@@ -189,7 +192,7 @@ def parse_workua_detail_pages(**context) -> None:
 
     contents = resp.get("Contents", [])
     if not contents:
-        print(f"No raw detail files found under {prefix}")
+        logger.warning("No raw detail files found under %s", prefix)
         return
 
     for obj in contents:
@@ -210,4 +213,4 @@ def parse_workua_detail_pages(**context) -> None:
         out_key = f"jobs/source=workua/details_parsed/dt={ds}/job_{job_id}.json"
         upload_json(bucket=bucket, key=out_key, payload=parsed)
 
-        print(f"Uploaded parsed detail to s3://{bucket}/{out_key}")
+        logger.info("Uploaded parsed detail to s3://%s/%s", bucket, out_key)

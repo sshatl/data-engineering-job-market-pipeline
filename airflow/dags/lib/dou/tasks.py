@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from datetime import datetime, timezone
@@ -12,6 +13,8 @@ from lib.dou.parser import (
     parse_dou_detail_html,
     parse_dou_search_cards,
 )
+
+logger = logging.getLogger(__name__)
 
 DOU_LIST_URL = "https://jobs.dou.ua/vacancies/?category=Data+Engineer"
 DOU_XHR_URL = "https://jobs.dou.ua/vacancies/xhr-load/?category=Data%20Engineer"
@@ -160,9 +163,9 @@ def fetch_dou_jobs(**context) -> None:
 
         all_cards.extend(new_cards)
 
-        print(
-            f"XHR count={count}: parsed={len(xhr_cards)}, "
-            f"new={len(new_cards)}, total={len(all_cards)}, last={last}"
+        logger.info(
+            "XHR count=%d: parsed=%d, new=%d, total=%d, last=%s",
+            count, len(xhr_cards), len(new_cards), len(all_cards), last,
         )
 
         if last:
@@ -175,7 +178,7 @@ def fetch_dou_jobs(**context) -> None:
     parsed_key = f"jobs/source=dou/dt={ds}/parsed/search_results.json"
     upload_json(bucket=bucket, key=parsed_key, payload=all_cards)
 
-    print(f"Uploaded {len(all_cards)} jobs to s3://{bucket}/{parsed_key}")
+    logger.info("Uploaded %d jobs to s3://%s/%s", len(all_cards), bucket, parsed_key)
 
 
 def fetch_dou_detail_pages(**context) -> None:
@@ -199,7 +202,7 @@ def fetch_dou_detail_pages(**context) -> None:
         detail_key = f"jobs/source=dou/details_raw/dt={ds}/job_{job_id}.html"
         upload_html(bucket=bucket, key=detail_key, html_text=resp.text)
 
-        print(f"Uploaded detail page {idx}/{len(cards)} to s3://{bucket}/{detail_key}")
+        logger.info("Uploaded detail page %d/%d to s3://%s/%s", idx, len(cards), bucket, detail_key)
         time.sleep(2)
 
 
@@ -225,7 +228,7 @@ def parse_dou_detail_pages(**context) -> None:
 
     contents = resp.get("Contents", [])
     if not contents:
-        print(f"No raw detail files found under {prefix}")
+        logger.warning("No raw detail files found under %s", prefix)
         return
 
     for obj in contents:
@@ -246,4 +249,4 @@ def parse_dou_detail_pages(**context) -> None:
         out_key = f"jobs/source=dou/details_parsed/dt={ds}/job_{job_id}.json"
         upload_json(bucket=bucket, key=out_key, payload=parsed)
 
-        print(f"Uploaded parsed detail to s3://{bucket}/{out_key}")
+        logger.info("Uploaded parsed detail to s3://%s/%s", bucket, out_key)
