@@ -94,8 +94,12 @@ def fetch_workua_jobs(**context) -> None:
         while True:
             url = build_workua_search_url(query_text, page)
 
-            response = session.get(url, timeout=60)
-            response.raise_for_status()
+            try:
+                response = session.get(url, timeout=60)
+                response.raise_for_status()
+            except requests.exceptions.RequestException:
+                logger.exception("Failed to fetch search page %d for query=%s: %s", page, query_name, url)
+                break
 
             raw_key = f"jobs/source=workua/query={query_name}/dt={ds}/raw/search_page_{page}.html"
             upload_html(bucket=bucket, key=raw_key, html_text=response.text)
@@ -171,8 +175,12 @@ def fetch_workua_detail_pages(**context) -> None:
     for idx, card in enumerate(deduped_cards, start=1):
         job_url = card["job_url"]
 
-        response = session.get(job_url, timeout=60)
-        response.raise_for_status()
+        try:
+            response = session.get(job_url, timeout=60)
+            response.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch detail page %d/%d: %s", idx, len(deduped_cards), job_url)
+            continue
 
         job_id = extract_workua_job_id(job_url)
         detail_key = f"jobs/source=workua/details_raw/dt={ds}/job_{job_id}.html"
