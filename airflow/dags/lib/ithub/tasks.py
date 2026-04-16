@@ -82,8 +82,12 @@ def fetch_ithub_jobs(**context) -> None:
     while True:
         url = build_ithub_search_url(page)
 
-        resp = session.get(url, timeout=60)
-        resp.raise_for_status()
+        try:
+            resp = session.get(url, timeout=60)
+            resp.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch search page %d: %s", page, url)
+            break
 
         raw_key = f"jobs/source=ithub/dt={ds}/raw/search_page_{page}.html"
         upload_html(bucket=bucket, key=raw_key, html_text=resp.text)
