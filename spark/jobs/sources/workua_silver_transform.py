@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 
@@ -12,6 +13,8 @@ from jobs.common.job_enrichment import (
     detect_seniority,
     detect_skills,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def env(name: str, default: str | None = None) -> str:
@@ -216,8 +219,8 @@ def main() -> None:
         .save()
     )
 
-    print(f"Silver parquet written to: {silver_path}")
-    print(f"PostgreSQL table written to: {jdbc_table}")
+    logger.info("Silver parquet written to: %s", silver_path)
+    logger.info("PostgreSQL table written to: %s", jdbc_table)
 
     spark.stop()
 
