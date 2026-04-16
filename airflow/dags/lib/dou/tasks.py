@@ -82,8 +82,12 @@ def fetch_dou_jobs(**context) -> None:
 
     session = build_session()
 
-    list_resp = session.get(DOU_LIST_URL, timeout=60)
-    list_resp.raise_for_status()
+    try:
+        list_resp = session.get(DOU_LIST_URL, timeout=60)
+        list_resp.raise_for_status()
+    except requests.exceptions.RequestException:
+        logger.exception("Failed to fetch DOU search page: %s", DOU_LIST_URL)
+        raise
 
     raw_page_1_key = f"jobs/source=dou/dt={ds}/raw/search_page_1.html"
     upload_html(bucket=bucket, key=raw_page_1_key, html_text=list_resp.text)
@@ -119,16 +123,20 @@ def fetch_dou_jobs(**context) -> None:
     virtual_page = 2
 
     while True:
-        xhr_resp = session.post(
-            DOU_XHR_URL,
-            headers=xhr_headers,
-            data={
-                "csrfmiddlewaretoken": csrf_token,
-                "count": str(count),
-            },
-            timeout=60,
-        )
-        xhr_resp.raise_for_status()
+        try:
+            xhr_resp = session.post(
+                DOU_XHR_URL,
+                headers=xhr_headers,
+                data={
+                    "csrfmiddlewaretoken": csrf_token,
+                    "count": str(count),
+                },
+                timeout=60,
+            )
+            xhr_resp.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch XHR page %d", virtual_page)
+            break
 
         payload = xhr_resp.json()
         html_block = payload.get("html", "")
@@ -195,8 +203,12 @@ def fetch_dou_detail_pages(**context) -> None:
     for idx, card in enumerate(cards, start=1):
         job_url = card["job_url"]
 
-        resp = session.get(job_url, timeout=60)
-        resp.raise_for_status()
+        try:
+            resp = session.get(job_url, timeout=60)
+            resp.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Failed to fetch detail page %d/%d: %s", idx, len(cards), job_url)
+            continue
 
         job_id = extract_dou_job_id(job_url)
         detail_key = f"jobs/source=dou/details_raw/dt={ds}/job_{job_id}.html"
