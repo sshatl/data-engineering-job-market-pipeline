@@ -80,6 +80,8 @@ def fetch_workua_jobs(**context) -> None:
     bucket = env("BRONZE_BUCKET")
     fetched_at = datetime.now(timezone.utc).isoformat()
 
+    workua_base_url = env("WORKUA_BASE_URL", "https://www.work.ua")
+
     session = build_session()
 
     global_seen_urls: set[str] = set()
@@ -92,7 +94,7 @@ def fetch_workua_jobs(**context) -> None:
         page = 1
 
         while True:
-            url = build_workua_search_url(query_text, page)
+            url = build_workua_search_url(query_text, page, base_url=workua_base_url)
 
             try:
                 response = session.get(url, timeout=60)
@@ -112,6 +114,7 @@ def fetch_workua_jobs(**context) -> None:
                 query_name=query_name,
                 query_text=query_text,
                 role_family=role_family,
+                base_url=workua_base_url,
             )
 
             new_cards = [card for card in cards if card["job_url"] not in global_seen_urls]

@@ -5,7 +5,7 @@ from urllib.parse import quote_plus, urljoin
 
 from bs4 import BeautifulSoup
 
-WORKUA_BASE_URL = "https://www.work.ua"
+WORKUA_BASE_URL_DEFAULT = "https://www.work.ua"
 
 WORKUA_QUERIES = [
     {
@@ -38,11 +38,11 @@ def extract_text_from_html(html: str) -> str:
     return clean_text(html)
 
 
-def build_workua_search_url(query_text: str, page: int) -> str:
+def build_workua_search_url(query_text: str, page: int, base_url: str = WORKUA_BASE_URL_DEFAULT) -> str:
     query_slug = quote_plus(query_text)
     if page == 1:
-        return f"{WORKUA_BASE_URL}/jobs-{query_slug}/"
-    return f"{WORKUA_BASE_URL}/jobs-{query_slug}/?page={page}"
+        return f"{base_url}/jobs-{query_slug}/"
+    return f"{base_url}/jobs-{query_slug}/?page={page}"
 
 
 def extract_workua_job_id(job_url: str) -> str:
@@ -59,6 +59,7 @@ def parse_workua_search_cards(
     fetched_at: str,
     dt: str,
     page: int,
+    base_url: str = WORKUA_BASE_URL_DEFAULT,
 ) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
 
@@ -76,7 +77,7 @@ def parse_workua_search_cards(
         if not re.match(r"^/jobs/\d+/?$", href):
             continue
 
-        job_url = urljoin(WORKUA_BASE_URL, href)
+        job_url = urljoin(base_url, href)
         job_id = extract_workua_job_id(job_url)
 
         if not job_id or job_id in seen_job_ids:

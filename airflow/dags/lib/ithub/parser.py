@@ -4,7 +4,7 @@ from urllib.parse import urlencode, urljoin
 
 from bs4 import BeautifulSoup
 
-ITHUB_BASE_URL = "https://ithub.ua"
+ITHUB_BASE_URL_DEFAULT = "https://ithub.ua"
 
 ITHUB_QUERY_NAME = "data_engineer"
 ITHUB_QUERY_TEXT = "data engineer"
@@ -17,7 +17,7 @@ def clean_text(value: str | None) -> str:
     return " ".join(value.split())
 
 
-def build_ithub_search_url(page: int) -> str:
+def build_ithub_search_url(page: int, base_url: str = ITHUB_BASE_URL_DEFAULT) -> str:
     params = {
         "populate": ITHUB_QUERY_TEXT,
         "field_domainjob_tid": "All",
@@ -25,10 +25,10 @@ def build_ithub_search_url(page: int) -> str:
     if page > 1:
         params["page"] = str(page - 1)
 
-    return f"{ITHUB_BASE_URL}/jobs?{urlencode(params)}"
+    return f"{base_url}/jobs?{urlencode(params)}"
 
 
-def parse_ithub_search_page(html: str, fetched_at: str, dt: str, page: int) -> list[dict]:
+def parse_ithub_search_page(html: str, fetched_at: str, dt: str, page: int, base_url: str = ITHUB_BASE_URL_DEFAULT) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
 
     results: list[dict] = []
@@ -43,7 +43,7 @@ def parse_ithub_search_page(html: str, fetched_at: str, dt: str, page: int) -> l
             continue
 
         title = clean_text(title_el.get_text(" ", strip=True))
-        job_url = urljoin(ITHUB_BASE_URL, href)
+        job_url = urljoin(base_url, href)
 
         company_el = card.select_one(".base a")
         company = clean_text(company_el.get_text(" ", strip=True)) if company_el else ""

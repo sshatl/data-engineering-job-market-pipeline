@@ -73,6 +73,8 @@ def fetch_ithub_jobs(**context) -> None:
     bucket = env("BRONZE_BUCKET")
     fetched_at = datetime.now(timezone.utc).isoformat()
 
+    ithub_base_url = env("ITHUB_BASE_URL", "https://ithub.ua")
+
     session = build_session()
 
     page = 1
@@ -80,7 +82,7 @@ def fetch_ithub_jobs(**context) -> None:
     seen_urls: set[str] = set()
 
     while True:
-        url = build_ithub_search_url(page)
+        url = build_ithub_search_url(page, base_url=ithub_base_url)
 
         try:
             resp = session.get(url, timeout=60)
@@ -97,6 +99,7 @@ def fetch_ithub_jobs(**context) -> None:
             fetched_at=fetched_at,
             dt=ds,
             page=page,
+            base_url=ithub_base_url,
         )
 
         if not cards:
