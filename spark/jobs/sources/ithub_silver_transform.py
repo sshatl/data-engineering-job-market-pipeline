@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import sys
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -57,7 +58,17 @@ def main() -> None:
         .getOrCreate()
     )
 
-    df = spark.read.option("multiLine", "true").json(search_path)
+    try:
+        df = spark.read.option("multiLine", "true").json(search_path)
+    except Exception:
+        logger.exception("Failed to read input data from S3")
+        spark.stop()
+        sys.exit(1)
+
+    if len(df.head(1)) == 0:
+        logger.warning("No search results found at %s — skipping transform", search_path)
+        spark.stop()
+        return
 
     detect_skills_udf = F.udf(detect_skills, T.ArrayType(T.StringType()))
     detect_remote_type_udf = F.udf(detect_remote_type, T.StringType())

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import sys
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
@@ -66,8 +67,23 @@ def main() -> None:
         .getOrCreate()
     )
 
-    search_df = spark.read.option("multiLine", "true").json(search_path)
-    detail_df = spark.read.option("multiLine", "true").json(detail_path)
+    try:
+        search_df = spark.read.option("multiLine", "true").json(search_path)
+        detail_df = spark.read.option("multiLine", "true").json(detail_path)
+    except Exception:
+        logger.exception("Failed to read input data from S3")
+        spark.stop()
+        sys.exit(1)
+
+    if len(search_df.head(1)) == 0:
+        logger.warning("No search results found at %s — skipping transform", search_path)
+        spark.stop()
+        return
+
+    if len(detail_df.head(1)) == 0:
+        logger.warning("No detail pages found at %s — skipping transform", detail_path)
+        spark.stop()
+        return
 
     extract_job_id_udf = F.udf(extract_workua_job_id, T.StringType())
     detect_skills_udf = F.udf(detect_skills, T.ArrayType(T.StringType()))
