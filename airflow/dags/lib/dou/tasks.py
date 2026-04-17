@@ -16,9 +16,6 @@ from lib.dou.parser import (
 
 logger = logging.getLogger(__name__)
 
-DOU_LIST_URL = "https://jobs.dou.ua/vacancies/?category=Data+Engineer"
-DOU_XHR_URL = "https://jobs.dou.ua/vacancies/xhr-load/?category=Data%20Engineer"
-
 
 def env(name: str, default: str | None = None) -> str:
     value = os.environ.get(name, default)
@@ -80,13 +77,17 @@ def fetch_dou_jobs(**context) -> None:
     bucket = env("BRONZE_BUCKET")
     fetched_at = datetime.now(timezone.utc).isoformat()
 
+    dou_base_url = env("DOU_BASE_URL", "https://jobs.dou.ua")
+    dou_search_url = env("DOU_SEARCH_URL", f"{dou_base_url}/vacancies/?category=Data+Engineer")
+    dou_xhr_url = env("DOU_XHR_URL", f"{dou_base_url}/vacancies/xhr-load/?category=Data%20Engineer")
+
     session = build_session()
 
     try:
-        list_resp = session.get(DOU_LIST_URL, timeout=60)
+        list_resp = session.get(dou_search_url, timeout=60)
         list_resp.raise_for_status()
     except requests.exceptions.RequestException:
-        logger.exception("Failed to fetch DOU search page: %s", DOU_LIST_URL)
+        logger.exception("Failed to fetch DOU search page: %s", dou_search_url)
         raise
 
     raw_page_1_key = f"jobs/source=dou/dt={ds}/raw/search_page_1.html"
@@ -97,6 +98,7 @@ def fetch_dou_jobs(**context) -> None:
         fetched_at=fetched_at,
         dt=ds,
         page=1,
+        base_url=dou_base_url,
     )
 
     csrf_token = session.cookies.get("csrftoken", "")
@@ -105,7 +107,7 @@ def fetch_dou_jobs(**context) -> None:
         "Accept": "application/json, text/javascript, */*; q=0.01",
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "Origin": "https://jobs.dou.ua",
-        "Referer": DOU_LIST_URL,
+        "Referer": dou_search_url,
         "X-Requested-With": "XMLHttpRequest",
     }
 
@@ -125,7 +127,7 @@ def fetch_dou_jobs(**context) -> None:
     while True:
         try:
             xhr_resp = session.post(
-                DOU_XHR_URL,
+                dou_xhr_url,
                 headers=xhr_headers,
                 data={
                     "csrfmiddlewaretoken": csrf_token,
@@ -153,6 +155,7 @@ def fetch_dou_jobs(**context) -> None:
             fetched_at=fetched_at,
             dt=ds,
             page=virtual_page,
+            base_url=dou_base_url,
         )
 
         if not xhr_cards:

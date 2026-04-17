@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
-DOU_BASE_URL = "https://jobs.dou.ua"
+DOU_BASE_URL_DEFAULT = "https://jobs.dou.ua"
 
 
 def clean_text(value: str | None) -> str:
@@ -38,6 +38,7 @@ def parse_dou_search_cards(
     fetched_at: str,
     dt: str,
     page: int,
+    base_url: str = DOU_BASE_URL_DEFAULT,
 ) -> list[dict]:
     soup = BeautifulSoup(html, "html.parser")
 
@@ -52,7 +53,7 @@ def parse_dou_search_cards(
         if not href:
             continue
 
-        job_url = urljoin(DOU_BASE_URL, href)
+        job_url = urljoin(base_url, href)
         title = clean_text(title_el.get_text(" ", strip=True))
 
         company_el = vacancy.select_one(".company")
