@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import boto3
 import requests
 from botocore.exceptions import ClientError
+
 from lib.workua.parser import (
     WORKUA_QUERIES,
     build_workua_search_url,

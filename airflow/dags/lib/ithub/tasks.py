@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 import boto3
 import requests
+
 from lib.ithub.parser import build_ithub_search_url, parse_ithub_search_page
 
 logger = logging.getLogger(__name__)

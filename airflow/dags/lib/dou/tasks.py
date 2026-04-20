@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 import boto3
 import requests
+
 from lib.dou.parser import (
     extract_dou_job_id,
     parse_dou_detail_html,

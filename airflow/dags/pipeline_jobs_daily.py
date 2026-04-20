@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from airflow.operators.bash import BashOperator
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
+
+from airflow import DAG
 from lib.common.notifications import notify_telegram_on_failure
 from lib.common.spark_submit import build_spark_submit_cmd
 from lib.dou.tasks import (
@@ -19,8 +21,6 @@ from lib.workua.tasks import (
     fetch_workua_jobs,
     parse_workua_detail_pages,
 )
-
-from airflow import DAG
 
 DEFAULT_DS = "{{ ds }}"
 
