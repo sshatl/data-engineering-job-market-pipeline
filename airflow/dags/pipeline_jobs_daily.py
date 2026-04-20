@@ -3,6 +3,9 @@ from __future__ import annotations
 import os
 from datetime import datetime, timedelta
 
+from airflow.operators.bash import BashOperator
+from airflow.operators.empty import EmptyOperator
+from airflow.operators.python import PythonOperator
 from lib.common.notifications import notify_telegram_on_failure
 from lib.common.spark_submit import build_spark_submit_cmd
 from lib.dou.tasks import (
@@ -18,9 +21,6 @@ from lib.workua.tasks import (
 )
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
 
 DEFAULT_DS = "{{ ds }}"
 
@@ -52,6 +52,8 @@ MINIO_ACCESS_KEY = env("MINIO_ACCESS_KEY")
 MINIO_SECRET_KEY = env("MINIO_SECRET_KEY")
 BRONZE_BUCKET = env("BRONZE_BUCKET", "jobs-bronze")
 SILVER_BUCKET = env("SILVER_BUCKET", "jobs-silver")
+
+DQ_MAX_UNKNOWN_RATIO = float(env("DQ_MAX_UNKNOWN_RATIO", "0.80"))
 
 
 def build_postgres_promote_cmd(final_table: str, staging_table: str) -> str:
@@ -155,15 +157,15 @@ BEGIN
     INTO empty_skills_ratio
     FROM {POSTGRES_SCHEMA}.int_job_posts_all_sources;
 
-    IF unknown_remote_ratio > 0.80 THEN
+    IF unknown_remote_ratio > {DQ_MAX_UNKNOWN_RATIO} THEN
         RAISE EXCEPTION 'Operational check failed: unknown remote_type ratio is too high: %', unknown_remote_ratio;
     END IF;
 
-    IF unknown_seniority_ratio > 0.80 THEN
+    IF unknown_seniority_ratio > {DQ_MAX_UNKNOWN_RATIO} THEN
         RAISE EXCEPTION 'Operational check failed: unknown seniority ratio is too high: %', unknown_seniority_ratio;
     END IF;
 
-    IF empty_skills_ratio > 0.80 THEN
+    IF empty_skills_ratio > {DQ_MAX_UNKNOWN_RATIO} THEN
         RAISE EXCEPTION 'Operational check failed: empty skills ratio is too high: %', empty_skills_ratio;
     END IF;
 END
