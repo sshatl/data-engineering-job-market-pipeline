@@ -1,3 +1,4 @@
+import pytest
 from jobs.common.job_enrichment import (
     detect_remote_type,
     detect_seniority,
@@ -133,4 +134,119 @@ def test_detect_seniority_returns_unknown_for_low_experience_without_title_signa
         text="General data engineering tasks.",
     )
 
+    assert result == "unknown"
+
+
+# ---- Edge cases: None, empty strings, whitespace ----
+
+
+@pytest.mark.parametrize("value", [None, "", "   ", "\n\t"])
+def test_detect_skills_returns_empty_for_blank_inputs(value):
+    assert detect_skills(value) == []
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_detect_remote_type_returns_unknown_for_blank_inputs(value):
+    assert detect_remote_type(location=value, text=value) == "unknown"
+
+
+@pytest.mark.parametrize("value", [None, "", "   "])
+def test_detect_seniority_returns_unknown_for_blank_inputs(value):
+    assert detect_seniority(title=value, experience_text=value, text=value) == "unknown"
+
+
+# ---- Edge cases: Unicode, Ukrainian, mixed languages ----
+
+
+def test_detect_skills_case_insensitive():
+    assert "python" in detect_skills("PYTHON and SPARK and SQL")
+    assert "spark" in detect_skills("PYTHON and SPARK and SQL")
+
+
+def test_detect_remote_type_ukrainian_remote():
+    assert detect_remote_type("Віддалена робота", "") == "remote"
+
+
+def test_detect_remote_type_ukrainian_hybrid():
+    assert detect_remote_type("Гібридний формат", "") == "hybrid"
+
+
+def test_detect_remote_type_ukrainian_office():
+    assert detect_remote_type("Робота в офісі", "") == "onsite"
+
+
+def test_detect_seniority_ukrainian_senior():
+    assert detect_seniority("Старший інженер даних", "", "") == "senior"
+
+
+def test_detect_seniority_ukrainian_lead():
+    assert detect_seniority("Керівник команди даних", "", "") == "lead"
+
+
+def test_detect_seniority_ukrainian_junior():
+    assert detect_seniority("Молодший інженер даних", "", "") == "junior"
+
+
+def test_detect_seniority_from_text_not_title():
+    """Seniority detected from body text when title has no signal."""
+    result = detect_seniority(
+        title="Data Engineer",
+        experience_text="",
+        text="We are looking for a Senior specialist to join our team.",
+    )
+    assert result == "senior"
+
+
+def test_detect_seniority_experience_in_ukrainian_text():
+    """'від 5 років' in experience_text triggers senior."""
+    result = detect_seniority(
+        title="Data Engineer",
+        experience_text="Досвід від 5 років у сфері data engineering",
+        text="",
+    )
+    assert result == "senior"
+
+
+# ---- Edge cases: mixed languages in one field ----
+
+
+def test_detect_skills_mixed_languages():
+    text = "Потрібен досвід з Python та Apache Spark, знання SQL обов'язково"
+    skills = detect_skills(text)
+    assert "python" in skills
+    assert "spark" in skills
+    assert "sql" in skills
+
+
+def test_detect_remote_type_mixed_language():
+    """Ukrainian text with English keyword 'remote' is detected."""
+    result = detect_remote_type("", "Ми пропонуємо remote формат роботи з будь-якого міста")
+    assert result == "remote"
+
+
+# ---- Edge cases: special characters, long text ----
+
+
+def test_detect_skills_with_special_chars():
+    """Skill names surrounded by special characters are still detected."""
+    text = "(Python), [SQL]; Airflow/Spark — Docker!!!"
+    skills = detect_skills(text)
+    assert "python" in skills
+    assert "sql" in skills
+    assert "airflow" in skills
+    assert "spark" in skills
+    assert "docker" in skills
+
+
+def test_detect_remote_type_ignores_text_beyond_1500_chars():
+    """Remote keyword after 1500 chars of body text is NOT detected."""
+    padding = "a " * 800  # 1600 chars
+    result = detect_remote_type("", padding + "remote work available")
+    assert result == "unknown"
+
+
+def test_detect_seniority_ignores_text_beyond_1500_chars():
+    """Seniority keyword after 1500 chars of body text is NOT detected."""
+    padding = "a " * 800
+    result = detect_seniority("Data Engineer", "", padding + "senior level required")
     assert result == "unknown"
