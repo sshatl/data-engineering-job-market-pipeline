@@ -12,3 +12,7 @@ known-first-party = ["lib"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+addopts = "--cov=airflow/dags/lib --cov=spark/jobs/common --cov-report=term-missing --cov-report=xml"
+
+[tool.coverage.run]
+omit = ["tests/*"]

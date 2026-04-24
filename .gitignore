@@ -33,4 +33,5 @@ spark-warehouse/
 # misc
 *.log
 
-.venv/
+.venv/coverage.xml
+.coverage
