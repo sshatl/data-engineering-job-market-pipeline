@@ -3,7 +3,131 @@ version: 2
 sources:
   - name: raw_jobs
     schema: public
+    description: "Silver-layer tables produced by Spark transform jobs. One row per scraped job posting."
+
     tables:
       - name: workua_jobs_clean
+        description: "Cleaned and enriched job postings scraped from Work.ua."
+        columns:
+          - name: source_job_uid
+            description: "Globally unique identifier for the job posting (source + job_id)."
+          - name: job_id
+            description: "Job ID extracted from the Work.ua posting URL."
+          - name: job_url
+            description: "Direct URL to the job posting on Work.ua."
+          - name: title
+            description: "Job title as listed in the posting."
+          - name: company
+            description: "Name of the hiring company."
+          - name: location
+            description: "Location field from the posting (city, remote, etc.)."
+          - name: snippet
+            description: "Short text preview shown on the search results page."
+          - name: published_text
+            description: "Raw publication date string as scraped from the page."
+          - name: description_full
+            description: "Full job description text extracted from the detail page."
+          - name: page_text
+            description: "Raw page text used as fallback for enrichment when structured fields are missing."
+          - name: source
+            description: "Source platform identifier. Always 'workua' for this table."
+          - name: query_name
+            description: "Internal name of the search query used to find this posting (e.g. 'data_engineer')."
+          - name: query_text
+            description: "Search query string submitted to Work.ua (e.g. 'data engineer')."
+          - name: role_family
+            description: "Normalised role category derived from the search query (e.g. 'data_engineer')."
+          - name: remote_type
+            description: "Detected work format: 'remote', 'hybrid', 'onsite', or 'unknown'."
+          - name: seniority
+            description: "Detected seniority level: 'junior', 'middle', 'senior', 'lead', or 'unknown'."
+          - name: skills
+            description: "Comma-separated list of technologies detected in the job description."
+          - name: dt
+            description: "Pipeline run date (YYYY-MM-DD). Partitioning key."
+          - name: fetched_at
+            description: "ISO-8601 timestamp of when the posting was fetched by the scraper."
+
       - name: dou_jobs_clean
+        description: "Cleaned and enriched job postings scraped from DOU.ua."
+        columns:
+          - name: source_job_uid
+            description: "Globally unique identifier for the job posting (source + job_id)."
+          - name: job_id
+            description: "Job ID extracted from the DOU posting URL."
+          - name: job_url
+            description: "Direct URL to the job posting on DOU.ua."
+          - name: title
+            description: "Job title as listed in the posting."
+          - name: company
+            description: "Name of the hiring company."
+          - name: location
+            description: "Location field from the posting (city, remote, etc.)."
+          - name: snippet
+            description: "Short text preview shown on the search results page."
+          - name: published_text
+            description: "Raw publication date string as scraped from the page."
+          - name: description_full
+            description: "Full job description text extracted from the detail page."
+          - name: page_text
+            description: "Raw page text used as fallback for enrichment when structured fields are missing."
+          - name: source
+            description: "Source platform identifier. Always 'dou' for this table."
+          - name: query_name
+            description: "Internal name of the search query used to find this posting."
+          - name: query_text
+            description: "Search query string submitted to DOU.ua."
+          - name: role_family
+            description: "Normalised role category derived from the search query (e.g. 'data_engineer')."
+          - name: remote_type
+            description: "Detected work format: 'remote', 'hybrid', 'onsite', or 'unknown'."
+          - name: seniority
+            description: "Detected seniority level: 'junior', 'middle', 'senior', 'lead', or 'unknown'."
+          - name: skills
+            description: "Comma-separated list of technologies detected in the job description."
+          - name: dt
+            description: "Pipeline run date (YYYY-MM-DD). Partitioning key."
+          - name: fetched_at
+            description: "ISO-8601 timestamp of when the posting was fetched by the scraper."
+
       - name: ithub_jobs_clean
+        description: "Cleaned and enriched job postings scraped from ITHub.ua."
+        columns:
+          - name: source_job_uid
+            description: "Globally unique identifier for the job posting (source + job_id)."
+          - name: job_id
+            description: "Job ID extracted from the ITHub posting URL."
+          - name: job_url
+            description: "Direct URL to the job posting on ITHub.ua."
+          - name: title
+            description: "Job title as listed in the posting."
+          - name: company
+            description: "Name of the hiring company."
+          - name: location
+            description: "Location field from the posting (city, remote, etc.)."
+          - name: snippet
+            description: "Short text preview shown on the search results page."
+          - name: published_text
+            description: "Raw publication date string as scraped from the page."
+          - name: description_full
+            description: "Full job description text extracted from the detail page."
+          - name: page_text
+            description: "Raw page text used as fallback for enrichment when structured fields are missing."
+          - name: source
+            description: "Source platform identifier. Always 'ithub' for this table."
+          - name: query_name
+            description: "Internal name of the search query used to find this posting."
+          - name: query_text
+            description: "Search query string submitted to ITHub.ua."
+          - name: role_family
+            description: "Normalised role category derived from the search query (e.g. 'data_engineer')."
+          - name: remote_type
+            description: "Detected work format: 'remote', 'hybrid', 'onsite', or 'unknown'."
+          - name: seniority
+            description: "Detected seniority level: 'junior', 'middle', 'senior', 'lead', or 'unknown'."
+          - name: skills
+            description: "Comma-separated list of technologies detected in the job description."
+          - name: dt
+            description: "Pipeline run date (YYYY-MM-DD). Partitioning key."
+          - name: fetched_at
+            description: "ISO-8601 timestamp of when the posting was fetched by the scraper."
