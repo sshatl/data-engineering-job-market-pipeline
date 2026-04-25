@@ -4,6 +4,10 @@ sources:
   - name: raw_jobs
     schema: public
     description: "Silver-layer tables produced by Spark transform jobs. One row per scraped job posting."
+    loaded_at_field: fetched_at
+    freshness:
+      warn_after: {count: 2, period: day}
+      error_after: {count: 3, period: day}
 
     tables:
       - name: workua_jobs_clean
