@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: int_job_posts_all_sources
+    description: "Union of cleaned job postings from all three sources before deduplication."
+    columns:
+      - name: source_job_uid
+        description: "Globally unique identifier for the job posting (source + job_id)."
+        tests:
+          - not_null
+
+      - name: source
+        description: "Source platform identifier."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['workua', 'dou', 'ithub']
+
+      - name: seniority
+        description: "Detected seniority level."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['junior', 'middle', 'senior', 'lead', 'unknown']
+
+      - name: remote_type
+        description: "Detected work format."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['remote', 'hybrid', 'onsite', 'unknown']
+
+  - name: int_job_posts_deduped_all_sources
+    description: "Deduplicated job postings — one row per unique company+title+seniority combination."
+    columns:
+      - name: cross_source_job_key
+        description: "MD5 hash of normalised company, title and seniority. Primary deduplication key."
+        tests:
+          - not_null
+          - unique
+
+      - name: source_job_uid
+        description: "Globally unique identifier of the winning (best quality) posting."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('int_job_posts_all_sources')
+              field: source_job_uid
+              severity: warn
+
+      - name: source
+        description: "Source platform of the winning posting."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['workua', 'dou', 'ithub']
