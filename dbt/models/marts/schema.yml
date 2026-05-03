@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: mart_skill_demand_all_sources
+    description: "Aggregated skill demand across all job sources. One row per unique skill."
+    columns:
+      - name: skill
+        description: "Detected technology or tool name."
+        tests:
+          - not_null
+          - unique
+
+      - name: job_count
+        description: "Number of deduplicated job postings that mention this skill."
+        tests:
+          - not_null
+
+  - name: mart_seniority_share_all_sources
+    description: "Distribution of job postings by seniority level. One row per seniority value."
+    columns:
+      - name: seniority
+        description: "Seniority level."
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: ['junior', 'middle', 'senior', 'lead', 'unknown']
+
+      - name: job_count
+        description: "Number of deduplicated job postings at this seniority level."
+        tests:
+          - not_null
+
+      - name: share_pct
+        description: "Percentage share of this seniority level out of all postings."
+        tests:
+          - not_null
+
+  - name: mart_remote_share_all_sources
+    description: "Distribution of job postings by work format. One row per remote_type value."
+    columns:
+      - name: remote_type
+        description: "Work format."
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: ['remote', 'hybrid', 'onsite', 'unknown']
+
+      - name: job_count
+        description: "Number of deduplicated job postings with this work format."
+        tests:
+          - not_null
+
+      - name: share_pct
+        description: "Percentage share of this work format out of all postings."
+        tests:
+          - not_null
