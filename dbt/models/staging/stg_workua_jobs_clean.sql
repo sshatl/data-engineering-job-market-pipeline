@@ -1,4 +1,7 @@
-{{ config(materialized='view') }}
+{{ config(
+    materialized='incremental',
+    unique_key='source_job_uid'
+) }}
 
 with source_data as (
 
@@ -23,6 +26,9 @@ with source_data as (
         cast(dt as text) as dt,
         cast(fetched_at as text) as fetched_at
     from {{ source('raw_jobs', 'workua_jobs_clean') }}
+    {% if is_incremental() %}
+    where dt > (select max(dt) from {{ this }})
+    {% endif %}
 
 ),
 
